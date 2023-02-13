@@ -1,43 +1,37 @@
 package com.hfad.layoutsactivitycounter_savingstate
 
 import android.os.Bundle
-import android.os.Parcel
-import android.os.Parcelable
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import com.hfad.layoutsactivitycounter_savingstate.databinding.ActivityMainBinding
-import kotlinx.android.parcel.Parcelize
-import java.io.Serializable
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
-    lateinit var state: State
+
+    private val viewModel by viewModels<MyViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.counterBtnIncrement.setOnClickListener { increment() }
+        binding.counterBtnIncrement.setOnClickListener { viewModel.increment() }
 
-        state = savedInstanceState?.getParcelable(KEY_STATE) ?: State(counterValue = 0)
-        renderState()
-    }
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putParcelable(KEY_STATE, state)
-    }
-
-    private fun increment() {
-       state.counterValue++
-        renderState()
+        if (viewModel.state.value == null) {
+            viewModel.initState(
+                MyViewModel.State(
+                    counterValue = 0))
+        }
+        viewModel.state.observe(this, Observer {
+            renderState(it)
+        })
     }
 
-    private fun renderState() {
+    private fun renderState(state: MyViewModel.State) {
         binding.textView.setText(state.counterValue.toString())
     }
-
-    @Parcelize
-    class State(var counterValue: Int) : Parcelable
 }
+
 
 
